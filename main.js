@@ -14,9 +14,9 @@ function getJIRAFeed(callback, errorCallback){
  *   formatted for rendering.
  * @param {function(string)} errorCallback - Called when the query or call fails.
  */
-async function getQueryResults(s, callback, errorCallback) {                                                 
+async function getQueryResults(searchTerm, callback, errorCallback) {                                                 
     try {
-      var response = await make_request(s, "json");
+      var response = await make_request(searchTerm, "json");
       callback(createHTMLElementResult(response));
     } catch (error) {
       errorCallback(error);
