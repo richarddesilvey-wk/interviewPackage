@@ -1,5 +1,5 @@
 
-function make_request(url, responseType) {
+async function make_request(url, responseType) {
   return new Promise(function(resolve, reject) {
     var request = new XMLHttpRequest();
     request.open('GET', url);
@@ -14,27 +14,25 @@ function make_request(url, responseType) {
       resolve(response);
     };
 
-    // Handle network errors
     request.onerror = function() {
-      reject(Error("Network Error"));
+      reject(Error('Network Error'));
     }
     request.onreadystatechange = function() {
       if(request.readyState == 4 && request.status == 401) {
-          reject("You must be logged in to JIRA to see this project.");
+          reject('You must be logged in to JIRA to see this project.');
       }
     }
 
-    // Make the request
     request.send();
   });
 }
 
 function getJIRAFeed(callback, errorCallback) {
-    var user = document.getElementById("user").value;
+    var user = document.getElementById('user').value;
     if(user == undefined) return;
 
-    var url = "https://jira.secondlife.com/activity?maxResults=50&streams=user+IS+"+user+"&providers=issues";
-    make_request(url, "").then(function(response) {
+    var url = 'https://jira.secondlife.com/activity?maxResults=50&streams=user+IS+'+user+'&providers=issues';
+    make_request(url, '').then(function(response) {
       // empty response type allows the request.responseXML property to be returned in the makeRequest call
       callback(url, response);
     }, errorCallback);
@@ -46,13 +44,13 @@ function getJIRAFeed(callback, errorCallback) {
  *   formatted for rendering.
  * @param {function(string)} errorCallback - Called when the query or call fails.
  */
-function getQueryResults(searchTerm, callback, errorCallback) {
-    try {
-      var response = make_request(searchTerm, "json");
-      callback(createHTMLElementResult(response));
-    } catch (error) {
-      errorCallback(error);
-    }
+async function getQueryResults(searchTerm, callback, errorCallback) {
+  try {
+    var response = await make_request(searchTerm, 'json');
+    callback(createHTMLElementResult(response));
+  } catch (error) {
+    errorCallback(error);
+  }
 }
 
 function loadOptions() {
@@ -66,24 +64,18 @@ function loadOptions() {
 }
 
 function buildJQL(callback) {
-  var callbackBase = "https://jira.secondlife.com/rest/api/2/search?jql=";
-  var project = document.getElementById("project").value;
-  var status = document.getElementById("statusSelect").value;
-  var inStatusFor = document.getElementById("daysPast").value;
+  var callbackBase = 'https://jira.secondlife.com/rest/api/2/search?jql=';
+  var project = document.getElementById('project').value;
+  var status = document.getElementById('statusSelect').value;
+  var inStatusFor = document.getElementById('daysPast').value;
   var fullCallbackUrl = callbackBase;
-  fullCallbackUrl += 'project=${project}+and+status=${status}+and+status+changed+to+${status}+before+-${inStatusFor}d&fields=id,status,key,assignee,summary&maxresults=100';
+  fullCallbackUrl += 'project='+project+'+and+status='+status+'+and+status+changed+to+'+status+'+before+-'+inStatusFor+'d&fields=id,status,key,assignee,summary&maxresults=100';
   callback(fullCallbackUrl);
 }
 
 function createHTMLElementResult(response) {
-
-// 
-// Create HTML output to display the search results.
-// results.json in the "json_results" folder contains a sample of the API response
-// hint: you may run the application as well if you fix the bug. 
-// 
-
-  return '<p>There may be results, but you must read the response and display them.</p>';
+  // response seems to be just a [object Promise] when I print it
+  return '<p>'+ response.total + '</p>';
 }
 
 function domify(str) {
@@ -93,7 +85,7 @@ function domify(str) {
 
 function checkProjectExists() {
     try {
-      return make_request("https://jira.secondlife.com/rest/api/2/project/SUN", "json");
+      return make_request('https://jira.secondlife.com/rest/api/2/project/SUN', 'json');
     } catch (errorMessage) {
       document.getElementById('status').innerHTML = 'ERROR. ' + errorMessage;
       document.getElementById('status').hidden = false;
@@ -102,7 +94,7 @@ function checkProjectExists() {
 
 /**
  * When the Query button is clicked the query is built and the results are
- * fetched and the results are rendered.
+ * fetched then the results are rendered.
  */
 function queryClickHandler() {
   buildJQL(function(url) {
@@ -135,20 +127,21 @@ function activityFeedClickHandler() {
 
     // render result
     var feed = xmlDoc.getElementsByTagName('feed');
-    var entries = feed[0].getElementsByTagName("entry");
+    var entries = feed[0].getElementsByTagName('entry');
     var list = document.createElement('ul');
 
     entries.forEach(function(entry) {
       var title = entry.getElementByTagName('title')[0].innerHTML;
-      var updated = entry.getElementsByTagName("updated")[0].innerHTML;
+      var updated = entry.getElementsByTagName('updated')[0].innerHTML;
       var listItem = document.createElement('li');
 
-      listItem.innerHTML = new Date(updated).toLocaleString() + " - " + domify(title);
+      listItem.innerHTML = new Date(updated).toLocaleString() + ' - ' + domify(title);
       list.appendChild(listItem);
     });
 
     var feedResultDiv = document.getElementById('query-result');
-    if(list.childNodes.length > 0){
+
+    if(list.childNodes.length > 0) {
       feedResultDiv.innerHTML = list.outerHTML;
     } else {
       document.getElementById('status').innerHTML = 'There are no activity results.';
@@ -168,8 +161,8 @@ function activityFeedClickHandler() {
  * Query click handler
  */
 function setupListeners() {
-  document.getElementById("query").onclick = queryClickHandler;
-  document.getElementById("feed").onclick = activityFeedClickHandler;
+  document.getElementById('query').onclick = queryClickHandler;
+  document.getElementById('feed').onclick = activityFeedClickHandler;
 }
 
 /**
