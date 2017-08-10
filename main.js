@@ -100,77 +100,85 @@ function checkProjectExists() {
     }
 }
 
+/**
+ * When the Query button is clicked the query is built and the results are
+ * fetched and the results are rendered.
+ */
+function queryClickHandler() {
+  buildJQL(function(url) {
+    document.getElementById('status').innerHTML = 'Performing JIRA search for ' + url;
+    document.getElementById('status').hidden = false;
 
+    getQueryResults(url, function(return_val) {
+
+      document.getElementById('status').innerHTML = 'Query term: ' + url + '\n';
+      document.getElementById('status').hidden = false;
+
+      var jsonResultDiv = document.getElementById('query-result');
+      jsonResultDiv.innerHTML = return_val;
+      jsonResultDiv.hidden = false;
+
+    }, function(errorMessage) {
+        document.getElementById('status').innerHTML = 'ERROR. ' + errorMessage;
+        document.getElementById('status').hidden = false;
+    });
+  });
+}
+
+/**
+ * Fetches the XML JIRA feed and renders the result
+ */
+function activityFeedClickHandler() {
+  getJIRAFeed(function(url, xmlDoc) {
+    document.getElementById('status').innerHTML = 'Activity query: ' + url + '\n';
+    document.getElementById('status').hidden = false;
+
+    // render result
+    var feed = xmlDoc.getElementsByTagName('feed');
+    var entries = feed[0].getElementsByTagName("entry");
+    var list = document.createElement('ul');
+
+    entries.forEach(function(entry) {
+      var title = entry.getElementByTagName('title')[0].innerHTML;
+      var updated = entry.getElementsByTagName("updated")[0].innerHTML;
+      var listItem = document.createElement('li');
+
+      listItem.innerHTML = new Date(updated).toLocaleString() + " - " + domify(title);
+      list.appendChild(listItem);
+    });
+
+    var feedResultDiv = document.getElementById('query-result');
+    if(list.childNodes.length > 0){
+      feedResultDiv.innerHTML = list.outerHTML;
+    } else {
+      document.getElementById('status').innerHTML = 'There are no activity results.';
+      document.getElementById('status').hidden = false;
+    }
+
+    feedResultDiv.hidden = false;
+
+  }, function(errorMessage) {
+    document.getElementById('status').innerHTML = 'ERROR. ' + errorMessage;
+    document.getElementById('status').hidden = false;
+  });
+};
+
+/**
+ * Setup listeners for buttons. 
+ * Query click handler
+ */
+function setupListeners() {
+  document.getElementById("query").onclick = queryClickHandler;
+  document.getElementById("feed").onclick = activityFeedClickHandler;
+}
 
 /**
  * Setup: If logged in then setup listeners for the query and feed handlers.
  */
 document.addEventListener('DOMContentLoaded', function() {
-  // if logged in, setup listeners
     checkProjectExists().then(function() {
-      //load saved options
       loadOptions();
-
-      // query click handler
-      document.getElementById("query").onclick = function() {
-        // build query
-        buildJQL(function(url) {
-          document.getElementById('status').innerHTML = 'Performing JIRA search for ' + url;
-          document.getElementById('status').hidden = false;
-          // perform the search
-          getQueryResults(url, function(return_val) {
-            // render the results
-            document.getElementById('status').innerHTML = 'Query term: ' + url + '\n';
-            document.getElementById('status').hidden = false;
-            
-            var jsonResultDiv = document.getElementById('query-result');
-            jsonResultDiv.innerHTML = return_val;
-            jsonResultDiv.hidden = false;
-
-          }, function(errorMessage) {
-              document.getElementById('status').innerHTML = 'ERROR. ' + errorMessage;
-              document.getElementById('status').hidden = false;
-          });
-        });
-      }
-
-      // activity feed click handler
-      document.getElementById("feed").onclick = function() {
-        // get the xml feed
-        getJIRAFeed(function(url, xmlDoc) {
-          document.getElementById('status').innerHTML = 'Activity query: ' + url + '\n';
-          document.getElementById('status').hidden = false;
-
-          // render result
-          var feed = xmlDoc.getElementsByTagName('feed');
-          var entries = feed[0].getElementsByTagName("entry");
-          var list = document.createElement('ul');
-
-          entries.forEach(function(entry) {
-            var title = entry.getElementByTagName('title')[0].innerHTML;
-            var updated = entry.getElementsByTagName("updated")[0].innerHTML;
-            var listItem = document.createElement('li');
-
-            listItem.innerHTML = new Date(updated).toLocaleString() + " - " + domify(title);
-            list.appendChild(listItem);
-          });
-
-          var feedResultDiv = document.getElementById('query-result');
-          if(list.childNodes.length > 0){
-            feedResultDiv.innerHTML = list.outerHTML;
-          } else {
-            document.getElementById('status').innerHTML = 'There are no activity results.';
-            document.getElementById('status').hidden = false;
-          }
-          
-          feedResultDiv.hidden = false;
-
-        }, function(errorMessage) {
-          document.getElementById('status').innerHTML = 'ERROR. ' + errorMessage;
-          document.getElementById('status').hidden = false;
-        });
-      };
-
+      setupListeners();
     }).catch(function(errorMessage) {
         document.getElementById('status').innerHTML = 'ERROR. ' + errorMessage;
         document.getElementById('status').hidden = false;
