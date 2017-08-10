@@ -1,10 +1,10 @@
 // Saves options to chrome.storage
 function save_options() {
-  var prj = document.getElementById('project').value;
-  var usr = document.getElementById('user').value;
+  var project = document.getElementById('project').value;
+  var user = document.getElementById('user').value;
   chrome.storage.sync.set({
-    project: prj,
-    user: usr
+    project: project,
+    user: user
   }, function() {
     // Update status to let user know options were saved.
     var status = document.getElementById('status');
