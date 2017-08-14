@@ -74,8 +74,41 @@ function buildJQL(callback) {
 }
 
 function createHTMLElementResult(response) {
-  // response seems to be just a [object Promise] when I print it
-  return '<p>'+ response.total + '</p>';
+  
+  var issuesTable = document.createElement('table');
+  var issues = response.issues;
+
+  issues.forEach(function(issue) {
+    var issueRow = document.createElement('tr');
+    var issueData = document.createElement('td');
+
+    var statusImage = document.createElement('img');
+    statusImage.src = issue.fields.status.iconUrl;
+
+    var issueDataSummaryDiv = document.createElement('div');
+    
+    issueDataSummaryDiv.innerHTML += 'Summary: ' + issue.fields.summary;
+    issueDataSummaryDiv.innerHTML += '<br>Status: ' + issue.fields.status.name;
+    
+    issueDataSummaryDiv.appendChild(statusImage);
+
+    issueDataSummaryDiv.innerHTML += '<br>Description: ' + issue.fields.status.description;
+
+    if (issue.fields.assignee === null) {
+      issueDataSummaryDiv.innerHTML += '<br>Assignee: None';
+    } else {
+      issueDataSummaryDiv.innerHTML += '<br>Assignee: ' + issue.fields.assignee.name;
+    }
+
+    issueData.appendChild(issueDataSummaryDiv);
+    issueData.style.border = '1px solid black';
+    issueData.style.padding = '1.5rem 1.5rem 1.5rem 1.5rem';
+
+    issueRow.appendChild(issueData);
+    issuesTable.appendChild(issueRow);
+  });
+  
+  return issuesTable;
 }
 
 function domify(str) {
@@ -104,10 +137,10 @@ function queryClickHandler() {
     getQueryResults(url, function(return_val) {
 
       document.getElementById('status').innerHTML = 'Query term: ' + url + '\n';
-      document.getElementById('status').hidden = false;
+      document.getElementById('status').hidden = true;
 
       var jsonResultDiv = document.getElementById('query-result');
-      jsonResultDiv.innerHTML = return_val;
+      jsonResultDiv.appendChild(return_val);
       jsonResultDiv.hidden = false;
 
     }, function(errorMessage) {
